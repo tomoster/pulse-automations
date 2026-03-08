@@ -6,11 +6,50 @@ _The complete operating system. Every department, every workflow, every tool. Wh
 
 ## Company Overview
 
-**What Pulse does:** Takes manual business workflows and replaces them with AI-powered systems. Not SaaS — custom, owned automations built for each client.
+**What Pulse does:** Takes manual business workflows and replaces them with AI-powered systems that run autonomously. Not SaaS — custom, owned automations built and managed for each client.
 
 **How it runs:** One human (Tom) + an AI operations team (Junior + specialized agents). Tom is the face, relationship holder, and final quality gate. Everything else is delegated down.
 
 **Revenue model:** Project-based builds → monthly retainers for maintenance/expansion. Land with a quick win ($500-2K), expand into recurring ($500-1,500/mo).
+
+**Positioning:** We sell the *work*, not the tool. Clients don't buy automation software — they buy outcomes. "Your leads get followed up in under 60 seconds" not "We'll build you a lead automation." Every improvement in the underlying AI makes the service faster and cheaper, compounding the moat instead of eroding it. (Reference: Sequoia "Services: The New Software" thesis — `KB: business/opportunities/services-autopilot-thesis.md`)
+
+---
+
+## Core Methodology: WAT Framework
+
+Every client project follows the WAT framework (Workflows → Agent → Tools). This is how Pulse builds.
+
+**Layer 1: Workflows** — Markdown files that define what to do. Like SOPs for an AI team member. Each workflow specifies: objective, required inputs, which tools to use, expected outputs, edge case handling.
+
+**Layer 2: Agent** — The AI (Claude Code) reads workflows, decides tool sequence, handles failures. Orchestrates rather than executes directly.
+
+**Layer 3: Tools** — Python scripts that do one specific thing each (scrape a site, generate a PDF, call an API). Deterministic, testable, modular. Reusable across workflows.
+
+### The Deterministic Principle
+
+> Your job is to make non-deterministic processes as deterministic as possible.
+
+AI introduces variability. Our job is to constrain it. Clear instructions, defined outputs, structured guardrails. The tighter the instructions, the more reliable the output. Don't say "research this company" — define what fields to collect, what format to return, what counts as sufficient data, and what to do when data is missing.
+
+### The Deploy-Time Split
+
+When we push a project to production, we deploy the **W** (workflows) and **T** (tools) — but NOT the **A** (agent). Production automations run as deterministic code. The agentic advantage is in *how we build* (faster, fewer missed edge cases, agent-assisted debugging), not in how it runs in production.
+
+**Exception:** Growth/Scale tier clients who pay for a live personal AI assistant get an always-on agent. Everything else ships as deterministic automation.
+
+### The Self-Improvement Loop
+
+During development, agentic workflows get better through use:
+1. Run the workflow → expect errors on early runs
+2. Agent reads the error → identifies what broke
+3. Agent fixes the tool → updates the script
+4. Agent updates the workflow → documents the fix
+5. Next run is more robust → system learned from failure
+
+This is a genuine selling point: "The system gets smarter every time it runs during development. By the time we deliver, it's battle-tested against real failures." Budget 2-3 iteration cycles per new workflow in client projects.
+
+(Full methodology: `KB: ai-tooling/ai-automation/agentic-workflows.md`)
 
 ---
 
@@ -24,7 +63,7 @@ Lead comes in
   → Proposal & pricing (AUTO DRAFT → TOM APPROVE)
   → Contract & payment (AUTO)
   → Onboarding & access collection (AUTO)
-  → Build (AGENTS → TOM QA)
+  → Build using WAT framework (AGENTS → TOM QA)
   → Delivery & walkthrough (TOM)
   → Support & maintenance (AUTO + TOM ESCALATION)
   → Billing (AUTO)
@@ -111,7 +150,9 @@ Lead comes in
 | **Growth** | $5,000-10,000 | $499/mo | Full workflow overhaul + personal AI assistant + weekly optimization |
 | **Scale** | $10,000-25,000 | $1,500+/mo | Enterprise-grade multi-department automation + dedicated support |
 
-**Pricing philosophy:** Start with project-based to build credibility. Convert to retainer after first delivery. First month retainer due upfront for new clients.
+**Pricing note:** Industry average for AI agency retainers is ~$3,200/mo. Our Growth tier ($499) is deliberately below market to land first clients and build case studies. Raise prices once proof points exist. The margin structure supports it — costs are almost entirely API calls.
+
+**Pricing philosophy:** Start with project-based to build credibility. Convert to retainer after first delivery. First month retainer due upfront for new clients. Frame retainers as "we run this for you" (managed outcome), not "we maintain your software" (tool support).
 
 ### Tools
 - **Proposals:** PandaDoc or Google Docs template (Liaison fills, Tom approves)
@@ -171,7 +212,7 @@ Lead comes in
 
 ## Department 4: Engineering (Build & Delivery)
 
-**Purpose:** Actually build the automations. This is where the agents do real work.
+**Purpose:** Actually build the automations using the WAT framework.
 
 ### Workflow
 
@@ -181,21 +222,28 @@ Lead comes in
 
 2. Architect writes technical spec — AUTO
    → What to build, tech stack, integrations needed
+   → Maps to WAT structure: which workflows, which tools, what the agent orchestrates
    → Spec posted for Tom's approval (quick wins skip this)
 
 3. Tom approves spec — TOM (30 sec - 5 min)
 
 4. Build begins — AUTO
    → Architect routes to Backend/Frontend/Automations agents
-   → Agents build in isolated project repos
+   → Agents build in isolated project repos using WAT structure
    → Each agent follows its build skill (backend-build, frontend-build, automations-build)
+   → Self-improvement loop runs: agents fix errors, update workflows, iterate 2-3 cycles
 
 5. QA — AUTO + TOM
    → Automated tests run
    → Junior reviews output against spec
    → Tom does final walkthrough (5-15 min)
 
-6. Delivery — TOM
+6. Deploy — AUTO
+   → Deterministic W + T deployed to production (trigger.dev, Vercel, or VPS cron)
+   → Agent layer NOT deployed (unless Growth/Scale tier with live assistant)
+   → Health check scripts configured for monitoring
+
+7. Delivery — TOM
    → Tom walks client through the build (15-30 min screen share)
    → Shows them how it works, answers questions
    → Gets sign-off
@@ -207,22 +255,34 @@ Lead comes in
 | **Architect** | Writes specs from project briefs | ✅ Fully auto (Tom approves spec) |
 | **Backend** | APIs, databases, server logic, integrations | ✅ Fully auto |
 | **Frontend** | UI, dashboards, client-facing interfaces | ✅ Fully auto |
-| **Automations** | Workflows, integrations, n8n/code-based automations | ✅ Fully auto |
+| **Automations** | Workflows, integrations, code-based automations (WAT) | ✅ Fully auto |
 | **Junior** | Orchestrates, QAs, flags issues | ✅ Fully auto |
 
+### Client Project Structure (Standard)
+```
+workflows/      # Markdown SOPs — the W in WAT
+tools/          # Python scripts — the T in WAT
+.tmp/           # Temporary/intermediate files (disposable)
+.env            # Client API keys (gitignored)
+CLAUDE.md       # Minimal — corrections only, NOT auto-generated
+```
+
+**CLAUDE.md rule:** Never auto-generate CLAUDE.md for client repos. Research shows generated context files decrease performance by 3% and increase costs by 20%. Only include corrections for consistent agent mistakes that can't be fixed by restructuring code. (Reference: `KB: ai-tooling/ai-automation/agentic-workflows.md`)
+
 ### Tech Stack (Per Project Type)
-| Project Type | Stack |
-|-------------|-------|
-| **Websites** | Next.js / HTML+CSS+JS, Vercel hosting |
-| **Automations** | Python scripts, n8n (last resort), cron jobs |
-| **AI Assistants** | OpenClaw or custom agent, Claude/GPT API |
-| **Dashboards** | Next.js + Supabase, Vercel hosting |
-| **Integrations** | Direct API connections, webhooks, MCP servers |
+| Project Type | Stack | Deployment |
+|-------------|-------|-----------|
+| **Automations** | Python scripts (WAT framework) | trigger.dev, modal, or VPS cron |
+| **Websites** | Next.js / HTML+CSS+JS | Vercel |
+| **AI Assistants** | OpenClaw or custom agent, Claude/GPT API | VPS (long-running process) |
+| **Dashboards** | Next.js + Supabase | Vercel |
+| **Integrations** | Direct API connections, webhooks, MCP servers | VPS or serverless |
 
 ### Tools
 - **Code:** Claude Code, Codex (agents use these as tools)
 - **Repos:** GitHub (one repo per client project)
 - **Hosting:** Vercel (frontend), Hostinger VPS (backend/automations)
+- **Deployment:** trigger.dev (scheduled automations), modal (heavy compute)
 - **Databases:** Supabase (default), SQLite (lightweight)
 
 ### What Tom Does
@@ -368,12 +428,27 @@ Costs are almost entirely API calls and hosting. No employees, no office, no ben
 
 ---
 
+## Client Data Security
+
+Every client project handles credentials, business data, and API keys. Security isn't optional.
+
+- **Credentials:** Stored in `.env` files per client repo (gitignored). Never hardcoded, never in CLAUDE.md.
+- **Access:** Each client project runs in its own isolated repo. No cross-client data access.
+- **Secrets in output:** Outbound messages (email, Slack, client reports) should be checked for leaked API keys, internal paths, or PII before sending.
+- **Client data retention:** Only store what's needed for the automation to run. Delete onboarding data once ingested into the project.
+- **Monitoring:** Nightly security review checks for secrets in version control, file permission issues, and suspicious activity.
+
+(Full security architecture: `KB: ai-tooling/agent-infrastructure/agent-security-layers.md`)
+
+---
+
 ## Full Tool Stack
 
 | Category | Tool | Cost | Purpose |
 |----------|------|------|---------|
 | **Hosting** | Vercel | Free-$20/mo | Frontend hosting |
 | **Hosting** | Hostinger VPS | ~$10/mo | Backend, automations, n8n |
+| **Deployment** | trigger.dev | Free-$30/mo | Scheduled automation jobs |
 | **Database** | Supabase | Free-$25/mo | Client project databases |
 | **Payments** | Stripe | 2.9% + $0.30/txn | Invoicing, subscriptions |
 | **Email** | Google Workspace | $6/mo | tom@pulsesystems.com, support@ |
@@ -421,10 +496,11 @@ Everything else is automated. As the client base grows, the only thing that scal
 - [ ] **Invoice template** — in builds/templates/
 - [ ] **Contract template** — standard services agreement
 - [ ] **Onboarding email sequence** — 3 emails (welcome, form link, kick-off)
-- [ ] **Client project folder structure** — standardize per-client repo layout
+- [ ] **Client project folder structure** — standardize per-client repo layout (WAT)
 - [ ] **Support email routing** — support@pulsesystems.com → Junior triage
 - [ ] **Health check scripts** — per-client monitoring (cron-based)
 - [ ] **Cost tracking per client** — API usage attribution (AgentLedger MVP would solve this)
+- [ ] **trigger.dev account** — for deploying client automations to production
 
 ---
 
@@ -443,3 +519,5 @@ With 10 clients across tiers:
 - **Tom's time:** ~10 hrs/week
 
 The marginal cost of each new client is almost zero. The marginal time is ~1 hr/week (one discovery call + one delivery). That's the whole point.
+
+**Pricing headroom:** Current pricing is intentionally below market ($499 vs industry avg $3,200/mo). Once 3-5 case studies exist, Growth tier can move to $999-1,500/mo with the same margins. Scale tier can push to $3,000-5,000/mo. The work quality justifies it — the introductory pricing is about building proof, not about cost structure.
